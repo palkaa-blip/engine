@@ -1,0 +1,288 @@
+{
+  "name": "Smart Order Fulfillment Engine (fraud, stock, shipping, loyalty - no login needed)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "k1000000-0000-4000-8000-000000000001",
+      "name": "Click to Run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  warehouses: [\n    { id: 'WH-DEL', city: 'Delhi', lat: 28.61, lng: 77.21, stock: { 'SKU-PHONE': 6, 'SKU-LAPTOP': 2, 'SKU-HEAD': 20, 'SKU-WATCH': 4, 'SKU-CASE': 40, 'SKU-TAB': 1 } },\n    { id: 'WH-MUM', city: 'Mumbai', lat: 19.08, lng: 72.88, stock: { 'SKU-PHONE': 8, 'SKU-LAPTOP': 3, 'SKU-HEAD': 15, 'SKU-WATCH': 5, 'SKU-CASE': 25, 'SKU-TAB': 2 } },\n    { id: 'WH-BLR', city: 'Bengaluru', lat: 12.97, lng: 77.59, stock: { 'SKU-PHONE': 5, 'SKU-LAPTOP': 4, 'SKU-HEAD': 10, 'SKU-WATCH': 3, 'SKU-CASE': 30, 'SKU-TAB': 0 } },\n    { id: 'WH-KOL', city: 'Kolkata', lat: 22.57, lng: 88.36, stock: { 'SKU-PHONE': 2, 'SKU-LAPTOP': 1, 'SKU-HEAD': 8, 'SKU-WATCH': 2, 'SKU-CASE': 10, 'SKU-TAB': 1 } }\n  ],\n  catalog: {\n    'SKU-PHONE': { name: 'Smartphone', weightKg: 0.4 },\n    'SKU-LAPTOP': { name: 'Laptop', weightKg: 2.2 },\n    'SKU-HEAD': { name: 'Headphones', weightKg: 0.3 },\n    'SKU-WATCH': { name: 'Smart watch', weightKg: 0.2 },\n    'SKU-CASE': { name: 'Phone case', weightKg: 0.1 },\n    'SKU-TAB': { name: 'Tablet', weightKg: 0.6 }\n  }\n} }];"
+      },
+      "id": "k1000000-0000-4000-8000-000000000002",
+      "name": "Warehouse Setup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const it = (sku, qty, price) => ({ sku: sku, qty: qty, price: price });\nconst mk = (orderId, customerId, customerName, accountAgeDays, lifetimeSpend, city, lat, lng, payment, speed, coupon, hour, items, billingCountry) => ({ json: { orderId: orderId, customerId: customerId, customerName: customerName, accountAgeDays: accountAgeDays, lifetimeSpend: lifetimeSpend, city: city, lat: lat, lng: lng, billingCountry: billingCountry || 'IN', shippingCountry: 'IN', payment: payment, speed: speed, coupon: coupon, hour: hour, items: items } });\nreturn [\n  mk('O-1001', 'C01', 'Asha Verma', 400, 120000, 'Jaipur', 26.91, 75.79, 'UPI', 'express', 'VIP15', 11, [it('SKU-PHONE', 2, 25000), it('SKU-CASE', 2, 500)]),\n  mk('O-1002', 'C02', 'Ravi Joshi', 20, 3000, 'Pune', 18.52, 73.86, 'COD', 'standard', 'SAVE10', 15, [it('SKU-HEAD', 1, 2000)]),\n  mk('O-1003', 'C03', 'Meera Shah', 1, 0, 'Chennai', 13.08, 80.27, 'CARD', 'express', '', 2, [it('SKU-LAPTOP', 3, 65000)]),\n  mk('O-1004', 'C04', 'Imran Khan', 200, 40000, 'Patna', 25.59, 85.14, 'UPI', 'standard', 'FLAT200', 18, [it('SKU-WATCH', 2, 8000), it('SKU-CASE', 1, 500)]),\n  mk('O-1005', 'C05', 'Neha Gupta', 90, 15000, 'Lucknow', 26.85, 80.95, 'CARD', 'standard', 'FAKE50', 10, [it('SKU-TAB', 2, 30000)]),\n  mk('O-1006', 'C06', 'Karan Malhotra', 500, 260000, 'Hyderabad', 17.38, 78.49, 'CARD', 'express', '', 13, [it('SKU-PHONE', 6, 25000), it('SKU-HEAD', 4, 2000)]),\n  mk('O-1007', 'C07', 'Sneha Rathore', 3, 500, 'Udaipur', 24.58, 73.68, 'COD', 'standard', '', 14, [it('SKU-PHONE', 10, 25000)]),\n  mk('O-1008', 'C08', 'Vikram Bora', 60, 8000, 'Guwahati', 26.14, 91.74, 'UPI', 'standard', 'SAVE10', 9, [it('SKU-CASE', 5, 500), it('SKU-HEAD', 2, 2000)]),\n  mk('O-1009', 'C01', 'Asha Verma', 400, 120000, 'Jaipur', 26.91, 75.79, 'UPI', 'standard', '', 12, [it('SKU-WATCH', 2, 8000)]),\n  mk('O-1010', 'C09', 'Divya Kulkarni', 30, 5000, 'Pune', 18.52, 73.86, 'UPI', 'express', '', 20, [it('SKU-LAPTOP', 2, 65000)]),\n  mk('O-1011', 'C10', 'Faisal Ahmed', 700, 90000, 'Hyderabad', 17.38, 78.49, 'UPI', 'standard', 'VIP15', 16, [it('SKU-HEAD', 3, 2000), it('SKU-CASE', 3, 500)], 'AE'),\n  mk('O-1012', 'C11', 'Kavya Reddy', 150, 22000, 'Chennai', 13.08, 80.27, 'COD', 'standard', '', 22, [it('SKU-TAB', 3, 30000)]),\n  mk('O-1002', 'C02', 'Ravi Joshi', 20, 3000, 'Pune', 18.52, 73.86, 'COD', 'standard', 'SAVE10', 15, [it('SKU-HEAD', 1, 2000)]),\n  mk('O-1014', 'C12', 'Zoya Ali', 365, 55000, 'Kolkata', 22.57, 88.36, 'CARD', 'express', '', 14, [it('SKU-LAPTOP', 5, 65000)]),\n  mk('O-1015', 'C13', 'Test Buyer', 100, 1000, 'Pune', 18.52, 73.86, 'UPI', 'standard', '', 10, [it('SKU-CASE', 0, 500)])\n];"
+      },
+      "id": "k1000000-0000-4000-8000-000000000003",
+      "name": "Sample Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = {};\nconst out = [];\n$input.all().forEach((item) => {\n  const o = item.json;\n  const orderId = String(o.orderId || '').trim();\n  if (!orderId || seen[orderId]) {\n    return;\n  }\n  seen[orderId] = true;\n  const items = (o.items || []).filter((it) => it && it.sku && it.qty > 0 && it.price > 0);\n  const subtotal = items.reduce((t, it) => t + it.qty * it.price, 0);\n  out.push({ json: { orderId: orderId, customerId: o.customerId, customerName: o.customerName, accountAgeDays: o.accountAgeDays, lifetimeSpend: o.lifetimeSpend, city: o.city, lat: o.lat, lng: o.lng, billingCountry: o.billingCountry, shippingCountry: o.shippingCountry, payment: o.payment, speed: o.speed, coupon: o.coupon || '', hour: o.hour, items: items, subtotal: subtotal, rejected: items.length === 0 } });\n});\nreturn out;"
+      },
+      "id": "k1000000-0000-4000-8000-000000000004",
+      "name": "Validate Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all().map((x) => x.json);\nconst valid = all.filter((o) => !o.rejected);\nconst mean = valid.length ? valid.reduce((t, o) => t + o.subtotal, 0) / valid.length : 0;\nconst variance = valid.length ? valid.reduce((t, o) => t + Math.pow(o.subtotal - mean, 2), 0) / valid.length : 0;\nconst std = Math.sqrt(variance);\nconst perCustomer = {};\nall.forEach((o) => {\n  perCustomer[o.customerId] = (perCustomer[o.customerId] || 0) + 1;\n});\nreturn all.map((o) => {\n  if (o.rejected) {\n    return { json: Object.assign({}, o, { fraudScore: 0, fraudLevel: 'Rejected', fraudReasons: ['No valid items'], route: 'hold' }) };\n  }\n  let score = 0;\n  const reasons = [];\n  if (o.accountAgeDays < 7) {\n    score += 2;\n    reasons.push('New account');\n  }\n  if (o.subtotal >= 100000) {\n    score += 2;\n    reasons.push('Very high order value');\n  }\n  if (o.payment === 'COD' && o.subtotal > 20000) {\n    score += 1;\n    reasons.push('High value cash on delivery');\n  }\n  if (o.billingCountry !== o.shippingCountry) {\n    score += 2;\n    reasons.push('Billing and shipping country differ');\n  }\n  if (o.hour >= 1 && o.hour <= 4) {\n    score += 1;\n    reasons.push('Night-time order');\n  }\n  if (perCustomer[o.customerId] >= 2) {\n    score += 1;\n    reasons.push('Multiple orders in one batch');\n  }\n  if (o.items.some((it) => it.qty >= 10)) {\n    score += 1;\n    reasons.push('Bulk quantity');\n  }\n  const z = std > 0 ? (o.subtotal - mean) / std : 0;\n  if (z > 2) {\n    score += 1;\n    reasons.push('Unusual order value (z=' + z.toFixed(1) + ')');\n  }\n  let level = 'Clear';\n  if (score >= 5) {\n    level = 'Block';\n  } else if (score >= 3) {\n    level = 'Review';\n  }\n  return { json: Object.assign({}, o, { fraudScore: score, fraudLevel: level, fraudReasons: reasons, route: level === 'Block' ? 'hold' : 'process' }) };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000005",
+      "name": "Fraud Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "m1000000-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.route }}",
+              "rightValue": "hold",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "k1000000-0000-4000-8000-000000000006",
+      "name": "Hold Order?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item) => {\n  const o = item.json;\n  const rejected = o.fraudLevel === 'Rejected';\n  const reason = rejected ? 'No valid items in order' : 'Fraud score ' + o.fraudScore + ': ' + o.fraudReasons.join(', ');\n  const action = rejected ? 'Reject order and ask the customer to resubmit' : 'Block shipment and contact the customer for verification';\n  return { json: { orderId: o.orderId, customer: o.customerName, valueAtRisk: o.subtotal, reason: reason, action: action } };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000007",
+      "name": "Fraud Hold Queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1220, 140]
+    },
+    {
+      "parameters": {
+        "jsCode": "const coupons = {\n  SAVE10: { type: 'percent', value: 10, cap: 500, min: 1000, tiers: [] },\n  FLAT200: { type: 'flat', value: 200, cap: 200, min: 1500, tiers: [] },\n  VIP15: { type: 'percent', value: 15, cap: 5000, min: 5000, tiers: ['Gold', 'Platinum'] }\n};\nconst tierOf = (spend) => (spend >= 100000 ? 'Platinum' : (spend >= 50000 ? 'Gold' : (spend >= 20000 ? 'Silver' : 'Bronze')));\nconst tierPct = { Bronze: 0, Silver: 1, Gold: 3, Platinum: 5 };\nconst tierMult = { Bronze: 1, Silver: 2, Gold: 3, Platinum: 4 };\nreturn $input.all().map((item) => {\n  const o = item.json;\n  const tier = tierOf(o.lifetimeSpend);\n  let couponDiscount = 0;\n  let couponNote = 'No coupon';\n  if (o.coupon) {\n    const c = coupons[o.coupon];\n    if (!c) {\n      couponNote = 'Invalid coupon ' + o.coupon;\n    } else if (o.subtotal < c.min) {\n      couponNote = o.coupon + ' needs a minimum of Rs ' + c.min;\n    } else if (c.tiers.length > 0 && c.tiers.indexOf(tier) === -1) {\n      couponNote = o.coupon + ' is only for ' + c.tiers.join(' or ') + ' members';\n    } else {\n      couponDiscount = c.type === 'percent' ? Math.min(Math.round(o.subtotal * c.value / 100), c.cap) : c.value;\n      couponNote = o.coupon + ' applied';\n    }\n  }\n  const afterCoupon = o.subtotal - couponDiscount;\n  const loyaltyDiscount = Math.round(afterCoupon * tierPct[tier] / 100);\n  const taxable = afterCoupon - loyaltyDiscount;\n  const gst = Math.round(taxable * 0.18);\n  const itemsTotal = taxable + gst;\n  const loyaltyPoints = Math.floor(itemsTotal / 100) * tierMult[tier];\n  return { json: Object.assign({}, o, { tier: tier, couponDiscount: couponDiscount, couponNote: couponNote, loyaltyDiscount: loyaltyDiscount, taxable: taxable, gst: gst, itemsTotal: itemsTotal, loyaltyPoints: loyaltyPoints }) };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000008",
+      "name": "Apply Pricing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1220, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rank = { Platinum: 0, Gold: 1, Silver: 2, Bronze: 3 };\nconst items = $input.all();\nitems.sort((a, b) => ((a.json.speed === 'express' ? 0 : 1) - (b.json.speed === 'express' ? 0 : 1)) || (rank[a.json.tier] - rank[b.json.tier]) || (a.json.orderId < b.json.orderId ? -1 : 1));\nreturn items.map((it, idx) => ({ json: Object.assign({}, it.json, { priorityRank: idx + 1 }) }));"
+      },
+      "id": "k1000000-0000-4000-8000-000000000009",
+      "name": "Prioritize Orders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1420, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Warehouse Setup').first().json;\nconst stock = {};\nsetup.warehouses.forEach((w) => {\n  stock[w.id] = Object.assign({}, w.stock);\n});\nconst toRad = (d) => d * Math.PI / 180;\nconst km = (lat1, lng1, lat2, lng2) => {\n  const R = 6371;\n  const dLat = toRad(lat2 - lat1);\n  const dLng = toRad(lng2 - lng1);\n  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n};\nreturn $input.all().map((item) => {\n  const o = item.json;\n  const ranked = setup.warehouses.map((w) => ({ id: w.id, city: w.city, distance: Math.round(km(o.lat, o.lng, w.lat, w.lng)) })).sort((a, b) => a.distance - b.distance);\n  const allocations = [];\n  let totalQty = 0;\n  let backorderQty = 0;\n  o.items.forEach((it) => {\n    let need = it.qty;\n    totalQty += it.qty;\n    ranked.forEach((w) => {\n      if (need <= 0) {\n        return;\n      }\n      const have = stock[w.id][it.sku] || 0;\n      const take = Math.min(have, need);\n      if (take > 0) {\n        stock[w.id][it.sku] = have - take;\n        need -= take;\n        allocations.push({ sku: it.sku, qty: take, warehouse: w.id, city: w.city, distance: w.distance });\n      }\n    });\n    if (need > 0) {\n      backorderQty += need;\n      allocations.push({ sku: it.sku, qty: need, warehouse: 'BACKORDER', city: '-', distance: 0 });\n    }\n  });\n  const status = backorderQty === 0 ? 'Full' : (backorderQty === totalQty ? 'Backorder' : 'Partial');\n  return { json: Object.assign({}, o, { allocations: allocations, backorderQty: backorderQty, fulfillmentStatus: status }) };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000010",
+      "name": "Allocate Inventory",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Warehouse Setup').first().json;\nconst baseFee = (d) => (d <= 300 ? 60 : (d <= 800 ? 100 : 150));\nconst perKg = (d) => (d <= 300 ? 40 : (d <= 800 ? 70 : 110));\nreturn $input.all().map((item) => {\n  const o = item.json;\n  const groups = {};\n  o.allocations.forEach((a) => {\n    if (a.warehouse === 'BACKORDER') {\n      return;\n    }\n    if (!groups[a.warehouse]) {\n      groups[a.warehouse] = { warehouse: a.warehouse, city: a.city, distance: a.distance, weightKg: 0, units: 0 };\n    }\n    groups[a.warehouse].weightKg += setup.catalog[a.sku].weightKg * a.qty;\n    groups[a.warehouse].units += a.qty;\n  });\n  const shipments = Object.keys(groups).map((k) => {\n    const g = groups[k];\n    const weight = Math.round(g.weightKg * 100) / 100;\n    let cost = baseFee(g.distance) + Math.ceil(weight) * perKg(g.distance);\n    if (o.speed === 'express') {\n      cost = Math.round(cost * 1.8);\n    }\n    const days = Math.max(1, Math.ceil(g.distance / 500) + 1 - (o.speed === 'express' ? 1 : 0));\n    return { warehouse: g.warehouse, from: g.city, distance: g.distance, units: g.units, weightKg: weight, cost: cost, etaDays: days };\n  });\n  const carrierCost = shipments.reduce((t, s) => t + s.cost, 0);\n  const freeShipping = o.tier === 'Platinum' || o.tier === 'Gold' || o.itemsTotal >= 3000;\n  const shippingFee = freeShipping ? 0 : carrierCost;\n  const grandTotal = o.itemsTotal + shippingFee;\n  const etaDays = shipments.length ? Math.max.apply(null, shipments.map((s) => s.etaDays)) : null;\n  return { json: Object.assign({}, o, { shipments: shipments, carrierCost: carrierCost, freeShipping: freeShipping, shippingFee: shippingFee, grandTotal: grandTotal, etaDays: etaDays }) };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000011",
+      "name": "Shipping Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1820, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "m1000000-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.fulfillmentStatus }}",
+              "rightValue": "Full",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "k1000000-0000-4000-8000-000000000012",
+      "name": "Fully Fulfilled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2040, 280]
+    },
+    {
+      "parameters": {
+        "jsCode": "let seq = 5000;\nreturn $input.all().map((item) => {\n  const o = item.json;\n  const labels = o.shipments.map((s) => {\n    seq += 1;\n    return { trackingId: 'TRK' + seq + '-' + s.warehouse, from: s.from, units: s.units, weightKg: s.weightKg, etaDays: s.etaDays };\n  });\n  const hold = o.fraudLevel === 'Review';\n  return { json: { orderId: o.orderId, customer: o.customerName, action: hold ? 'HOLD for manual fraud review, then ship' : 'SHIP NOW', labels: labels, grandTotal: o.grandTotal } };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000013",
+      "name": "Ready To Ship",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2260, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item) => {\n  const o = item.json;\n  const shipNowUnits = o.allocations.filter((a) => a.warehouse !== 'BACKORDER').reduce((t, a) => t + a.qty, 0);\n  const premium = o.tier === 'Gold' || o.tier === 'Platinum';\n  const offer = premium ? 'Free express upgrade on the backordered items' : 'Offer 5 percent coupon SORRY5 for the delay';\n  return { json: { orderId: o.orderId, customer: o.customerName, status: o.fulfillmentStatus, shipNowUnits: shipNowUnits, backorderUnits: o.backorderQty, restockEta: '7 days', offer: offer } };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000014",
+      "name": "Backorder Handling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2260, 360]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item) => {\n  const o = item.json;\n  let message = '';\n  if (o.fraudLevel === 'Review') {\n    message = 'Hi ' + o.customerName + ', we are verifying your order ' + o.orderId + ' for security. We will update you within 24 hours.';\n  } else if (o.fulfillmentStatus === 'Full') {\n    message = 'Hi ' + o.customerName + ', order ' + o.orderId + ' is confirmed. Total Rs ' + o.grandTotal + ', arriving in ' + o.etaDays + ' day(s). You earned ' + o.loyaltyPoints + ' points.';\n  } else if (o.fulfillmentStatus === 'Partial') {\n    message = 'Hi ' + o.customerName + ', part of order ' + o.orderId + ' ships now (' + o.etaDays + ' day(s)). ' + o.backorderQty + ' item(s) will follow in about 7 days.';\n  } else {\n    message = 'Hi ' + o.customerName + ', order ' + o.orderId + ' is waiting for stock (about 7 days). You can cancel anytime for a full refund.';\n  }\n  return { json: Object.assign({}, o, { message: message }) };\n});"
+      },
+      "id": "k1000000-0000-4000-8000-000000000015",
+      "name": "Customer Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2040, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "const setup = $('Warehouse Setup').first().json;\nconst used = {};\n$('Allocate Inventory').all().forEach((x) => {\n  x.json.allocations.forEach((a) => {\n    if (a.warehouse === 'BACKORDER') {\n      return;\n    }\n    used[a.warehouse] = used[a.warehouse] || {};\n    used[a.warehouse][a.sku] = (used[a.warehouse][a.sku] || 0) + a.qty;\n  });\n});\nconst warehouses = [];\nconst alerts = [];\nsetup.warehouses.forEach((w) => {\n  let startUnits = 0;\n  let usedUnits = 0;\n  Object.keys(w.stock).forEach((sku) => {\n    const u = (used[w.id] && used[w.id][sku]) || 0;\n    const left = w.stock[sku] - u;\n    startUnits += w.stock[sku];\n    usedUnits += u;\n    if (left <= 2) {\n      alerts.push('LOW STOCK ' + w.id + ' ' + sku + ': ' + left + ' left, reorder ' + (10 - left));\n    }\n  });\n  warehouses.push({ warehouse: w.id, city: w.city, startUnits: startUnits, usedUnits: usedUnits, leftUnits: startUnits - usedUnits, utilizationPct: Math.round(usedUnits * 100 / startUnits) });\n});\nreturn [{ json: { warehouses: warehouses, alerts: alerts } }];"
+      },
+      "id": "k1000000-0000-4000-8000-000000000016",
+      "name": "Warehouse Utilization",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2260, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "const util = $input.first().json;\nconst processed = $('Shipping Plan').all().map((x) => x.json);\nconst all = $('Fraud Check').all().map((x) => x.json);\nconst held = all.filter((o) => o.route === 'hold');\nconst sum = (arr, k) => arr.reduce((t, o) => t + (o[k] || 0), 0);\nconst count = (arr, fn) => {\n  const r = {};\n  arr.forEach((o) => {\n    const key = fn(o);\n    r[key] = (r[key] || 0) + 1;\n  });\n  return r;\n};\nconst fmt = (obj) => Object.keys(obj).map((k) => k + ': ' + obj[k]).join(', ');\nconst revenue = sum(processed, 'grandTotal');\nconst shippingCollected = sum(processed, 'shippingFee');\nconst carrierCost = sum(processed, 'carrierCost');\nconst couponSavings = sum(processed, 'couponDiscount');\nconst loyaltySavings = sum(processed, 'loyaltyDiscount');\nconst points = sum(processed, 'loyaltyPoints');\nconst heldValue = sum(held, 'subtotal');\nconst avgOrder = processed.length ? Math.round(revenue / processed.length) : 0;\nconst byStatus = count(processed, (o) => o.fulfillmentStatus);\nconst byFraud = count(all, (o) => o.fraudLevel);\nconst byTier = count(processed, (o) => o.tier);\nconst skuUnits = {};\nprocessed.forEach((o) => {\n  o.allocations.forEach((a) => {\n    if (a.warehouse !== 'BACKORDER') {\n      skuUnits[a.sku] = (skuUnits[a.sku] || 0) + a.qty;\n    }\n  });\n});\nconst topSkus = Object.keys(skuUnits).sort((a, b) => skuUnits[b] - skuUnits[a]).slice(0, 3).map((k) => k + ' (' + skuUnits[k] + ')');\nconst slaRisk = processed.filter((o) => o.speed === 'express' && (o.fulfillmentStatus !== 'Full' || o.etaDays > 2)).map((o) => o.orderId);\nconst fulfillRate = processed.length ? Math.round(100 * (byStatus.Full || 0) / processed.length) : 0;\nconst summary = [\n  '📦 Fulfillment Dashboard',\n  'Orders received: ' + all.length + ' | processed: ' + processed.length + ' | on hold: ' + held.length,\n  'Revenue (incl. tax and shipping): Rs ' + revenue,\n  'Average order value: Rs ' + avgOrder,\n  'Value held back by fraud checks: Rs ' + heldValue,\n  'Shipping collected: Rs ' + shippingCollected + ' vs carrier cost: Rs ' + carrierCost,\n  'Coupon savings: Rs ' + couponSavings + ' | loyalty savings: Rs ' + loyaltySavings + ' | points issued: ' + points,\n  'Fraud results: ' + fmt(byFraud),\n  'Fulfillment: ' + fmt(byStatus) + ' (full rate ' + fulfillRate + ' percent)',\n  'Customer tiers: ' + fmt(byTier),\n  'Top SKUs: ' + (topSkus.length ? topSkus.join(', ') : 'none'),\n  'Express orders at SLA risk: ' + (slaRisk.length ? slaRisk.join(', ') : 'none')\n].join('\\n');\nreturn [{ json: { received: all.length, processed: processed.length, held: held.length, revenue: revenue, avgOrder: avgOrder, fulfillRate: fulfillRate, warehouses: util.warehouses, alerts: util.alerts, summary: summary } }];"
+      },
+      "id": "k1000000-0000-4000-8000-000000000017",
+      "name": "Business Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2480, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst processed = $('Shipping Plan').all().map((x) => x.json);\nconst held = $('Fraud Check').all().map((x) => x.json).filter((o) => o.route === 'hold');\nconst orderRows = processed.map((o) => '| ' + o.orderId + ' | ' + o.customerName + ' | ' + o.tier + ' | ' + o.fraudLevel + ' | ' + o.fulfillmentStatus + ' | ' + o.shipments.map((s) => s.from).join(' + ') + ' | ' + (o.etaDays === null ? '-' : o.etaDays + 'd') + ' | Rs ' + o.grandTotal + ' |');\nconst holdRows = held.map((o) => '| ' + o.orderId + ' | ' + o.customerName + ' | ' + o.fraudLevel + ' | ' + o.fraudScore + ' | ' + o.fraudReasons.join(', ') + ' |');\nconst whRows = d.warehouses.map((w) => '| ' + w.warehouse + ' | ' + w.city + ' | ' + w.startUnits + ' | ' + w.usedUnits + ' | ' + w.leftUnits + ' | ' + w.utilizationPct + '% |');\nconst alertLines = d.alerts.length ? d.alerts.map((a) => '- ' + a) : ['- none'];\nconst report = [\n  '# Order Fulfillment Engine Report (demo data)',\n  '',\n  d.summary,\n  '',\n  '## Orders processed (priority order)',\n  '| Order | Customer | Tier | Fraud | Fulfillment | Ships from | ETA | Total |',\n  '|---|---|---|---|---|---|---|---|'\n].concat(orderRows).concat(['', '## Orders on hold', '| Order | Customer | Level | Score | Reasons |', '|---|---|---|---|---|']).concat(holdRows).concat(['', '## Warehouses', '| ID | City | Start | Used | Left | Utilization |', '|---|---|---|---|---|---|']).concat(whRows).concat(['', '## Stock alerts']).concat(alertLines).join('\\n');\nreturn [{ json: { processed: processed.length, held: held.length, report: report } }];"
+      },
+      "id": "k1000000-0000-4000-8000-000000000018",
+      "name": "Final Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2700, 560]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n1000000-0000-4000-8000-000000000001",
+              "name": "status",
+              "value": "Workflow completed successfully",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "k1000000-0000-4000-8000-000000000019",
+      "name": "Final Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2920, 560]
+    }
+  ],
+  "connections": {
+    "Click to Run": {
+      "main": [[{ "node": "Warehouse Setup", "type": "main", "index": 0 }]]
+    },
+    "Warehouse Setup": {
+      "main": [[{ "node": "Sample Orders", "type": "main", "index": 0 }]]
+    },
+    "Sample Orders": {
+      "main": [[{ "node": "Validate Orders", "type": "main", "index": 0 }]]
+    },
+    "Validate Orders": {
+      "main": [[{ "node": "Fraud Check", "type": "main", "index": 0 }]]
+    },
+    "Fraud Check": {
+      "main": [[{ "node": "Hold Order?", "type": "main", "index": 0 }]]
+    },
+    "Hold Order?": {
+      "main": [
+        [{ "node": "Fraud Hold Queue", "type": "main", "index": 0 }],
+        [{ "node": "Apply Pricing", "type": "main", "index": 0 }]
+      ]
+    },
+    "Apply Pricing": {
+      "main": [[{ "node": "Prioritize Orders", "type": "main", "index": 0 }]]
+    },
+    "Prioritize Orders": {
+      "main": [[{ "node": "Allocate Inventory", "type": "main", "index": 0 }]]
+    },
+    "Allocate Inventory": {
+      "main": [[{ "node": "Shipping Plan", "type": "main", "index": 0 }]]
+    },
+    "Shipping Plan": {
+      "main": [
+        [
+          { "node": "Fully Fulfilled?", "type": "main", "index": 0 },
+          { "node": "Customer Messages", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fully Fulfilled?": {
+      "main": [
+        [{ "node": "Ready To Ship", "type": "main", "index": 0 }],
+        [{ "node": "Backorder Handling", "type": "main", "index": 0 }]
+      ]
+    },
+    "Customer Messages": {
+      "main": [[{ "node": "Warehouse Utilization", "type": "main", "index": 0 }]]
+    },
+    "Warehouse Utilization": {
+      "main": [[{ "node": "Business Dashboard", "type": "main", "index": 0 }]]
+    },
+    "Business Dashboard": {
+      "main": [[{ "node": "Final Report", "type": "main", "index": 0 }]]
+    },
+    "Final Report": {
+      "main": [[{ "node": "Final Output", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
